@@ -23,6 +23,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef LIGRA_H
 #define LIGRA_H
+#define VMRSS_LINE 22
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -40,6 +41,7 @@
 #include "parseCommandLine.h"
 #include "index_map.h"
 #include "edgeMap_utils.h"
+
 using namespace std;
 
 //*****START FRAMEWORK*****
@@ -469,7 +471,29 @@ void Compute(graph<vertex>&, commandLine);
 template<class vertex>
 void Compute(hypergraph<vertex>&, commandLine);
 
+unsigned int get_proc_mem() {
+    int pid = getpid();
+    char file_name[64] = { 0 };
+    FILE* fd;
+    char line_buff[512] = { 0 };
+    sprintf(file_name, "/proc/%d/status", pid);
+    fd = fopen(file_name, "r");
+    if (fd == NULL) return 0;
+    char name[64];
+    int vmrss = 0;
+    int i;
+    for (i = 0; i < VMRSS_LINE - 1; i++) {
+        if(fgets(line_buff, sizeof(line_buff), fd));
+    }
+    if(fgets(line_buff, sizeof(line_buff), fd));
+    sscanf(line_buff, "%s %d", name, &vmrss);
+    fclose(fd);
+    return vmrss;
+}
+
+
 int parallel_main(int argc, char* argv[]) {
+    std::cout << "This flag indicates the beginning of test -- Stardust" << std::endl;
   commandLine P(argc,argv," [-s] <inFile>");
   char* iFile = P.getArgument(0);
   bool symmetric = P.getOptionValue("-s");
@@ -478,14 +502,19 @@ int parallel_main(int argc, char* argv[]) {
   bool mmap = P.getOptionValue("-m");
   //cout << "mmap = " << mmap << endl;
   long rounds = P.getOptionLongValue("-rounds",3);
+  int before = get_proc_mem();
   if (compressed) {
     if (symmetric) {
 #ifndef HYPER
       graph<compressedSymmetricVertex> G =
         readCompressedGraph<compressedSymmetricVertex>(iFile,symmetric,mmap); //symmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(sy;compressed):%d KB\n", after - before);
 #else
       hypergraph<compressedSymmetricVertex> G =
         readCompressedHypergraph<compressedSymmetricVertex>(iFile,symmetric,mmap); //symmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(sy;compressed;hyper):%d KB\n", after - before);
 #endif
       Compute(G,P);
       for(int r=0;r<rounds;r++) {
@@ -498,9 +527,13 @@ int parallel_main(int argc, char* argv[]) {
 #ifndef HYPER
       graph<compressedAsymmetricVertex> G =
         readCompressedGraph<compressedAsymmetricVertex>(iFile,symmetric,mmap); //asymmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(asy;compressed):%d KB\n", after - before);
 #else
       hypergraph<compressedAsymmetricVertex> G =
         readCompressedHypergraph<compressedAsymmetricVertex>(iFile,symmetric,mmap); //asymmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(asy;compressed;hyper):%d KB\n", after - before);
 #endif
       Compute(G,P);
       if(G.transposed) G.transpose();
@@ -517,9 +550,13 @@ int parallel_main(int argc, char* argv[]) {
 #ifndef HYPER
       graph<symmetricVertex> G =
         readGraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap); //symmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(sy):%d KB\n", after - before);
 #else
       hypergraph<symmetricVertex> G =
         readHypergraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap); //symmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(sy;hyper):%d KB\n", after - before);
 #endif
       Compute(G,P);
       for(int r=0;r<rounds;r++) {
@@ -532,9 +569,13 @@ int parallel_main(int argc, char* argv[]) {
 #ifndef HYPER
       graph<asymmetricVertex> G =
         readGraph<asymmetricVertex>(iFile,compressed,symmetric,binary,mmap); //asymmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(asy):%d KB\n", after - before);
 #else
       hypergraph<asymmetricVertex> G =
         readHypergraph<asymmetricVertex>(iFile,compressed,symmetric,binary,mmap); //asymmetric graph
+        int after = get_proc_mem();
+        printf("Memory consumption for Ligra(asy;hyper):%d KB\n", after - before);
 #endif
       Compute(G,P);
       if(G.transposed) G.transpose();
