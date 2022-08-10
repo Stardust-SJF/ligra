@@ -21,7 +21,9 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#include "ligra.h"
+//#include "ligra.h"  // original
+#include "../ligra/ligra.h"     // modified for clion
+#include "stdio.h"
 
 struct BFS_F {
   uintE* Parents;
@@ -39,6 +41,7 @@ struct BFS_F {
 
 template <class vertex>
 void Compute(graph<vertex>& GA, commandLine P) {
+    long reached_num = 0;
   long start = P.getOptionLongValue("-r",0);
   long n = GA.n;
   //creates Parents array, initialized to all -1, except for start
@@ -47,10 +50,12 @@ void Compute(graph<vertex>& GA, commandLine P) {
   Parents[start] = start;
   vertexSubset Frontier(n,start); //creates initial frontier
   while(!Frontier.isEmpty()){ //loop until frontier is empty
+      reached_num += Frontier.numNonzeros();
     vertexSubset output = edgeMap(GA, Frontier, BFS_F(Parents));    
     Frontier.del();
     Frontier = output; //set new frontier
   } 
   Frontier.del();
-  free(Parents); 
+  free(Parents);
+  printf("reached_num: %ld \n", reached_num);
 }
