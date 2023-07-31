@@ -42,6 +42,8 @@
 #include "index_map.h"
 #include "edgeMap_utils.h"
 
+#define OPENMP_DEBUG
+
 using namespace std;
 
 //*****START FRAMEWORK*****
@@ -248,7 +250,7 @@ vertexSubsetData<data> edgeMapData(graph<vertex>& GA, VS &vs, F f,
   vertex* frontierVertices = NULL;
   uintT outDegrees = 0;
   if(threshold > 0) { //compute sum of out-degrees if threshold > 0 
-    vs.toSparse();
+    vs.toSparse();  // make index
     degrees = newA(uintT, m);
     frontierVertices = newA(vertex,m);
     {parallel_for (size_t i=0; i < m; i++) {
@@ -261,6 +263,10 @@ vertexSubsetData<data> edgeMapData(graph<vertex>& GA, VS &vs, F f,
     if (outDegrees == 0) return vertexSubsetData<data>(numVertices);
   }
   if (!(fl & no_dense) && m + outDegrees > threshold) {
+
+#ifdef OPENMP_DEBUG
+      printf("DT_STEP");
+#endif
     if(degrees) free(degrees);
     if(frontierVertices) free(frontierVertices);
     vs.toDense();
@@ -268,6 +274,9 @@ vertexSubsetData<data> edgeMapData(graph<vertex>& GA, VS &vs, F f,
       edgeMapDenseForward<data, vertex, VS, F>(GA, vs, f, fl) :
       edgeMapDense<data, vertex, VS, F>(GA, vs, f, fl);
   } else {
+#ifdef OPENMP_DEBUG
+      printf("TD_STEP");
+#endif
     auto vs_out =
       (should_output(fl) && fl & sparse_no_filter) ? // only call snof when we output
       edgeMapSparse_no_filter<data, vertex, VS, F>(GA, frontierVertices, vs, degrees, vs.numNonzeros(), f, fl) :

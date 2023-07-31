@@ -32,9 +32,18 @@ else ifdef MKLROOT
 PCC = icpc
 PCFLAGS = -std=c++14 -O3 -DCILKP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
 
+else ifdef OPENMP_DEBUG
+PCC = g++
+PCFLAGS = -std=c++14 -fopenmp -march=native -g -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
+
+else ifdef SINGLE_DEBUG
+PCC = g++
+PCFLAGS = -std=c++14 -fopenmp -march=native -g $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
+
 else ifdef OPENMP
 PCC = g++
 PCFLAGS = -std=c++14 -fopenmp -march=native -O3 -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
+#PCFLAGS = -std=c++14 -fopenmp -O3 -DOPENMP $(INTT) $(INTE) $(CODE) $(PD) $(MEM)
 
 else
 PCC = g++

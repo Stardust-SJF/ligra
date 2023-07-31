@@ -24,6 +24,7 @@
 //#include "ligra.h"  // original
 #include "../ligra/ligra.h"     // modified for clion
 #include "stdio.h"
+#include "omp.h"
 
 struct BFS_F {
   uintE* Parents;
@@ -49,11 +50,21 @@ void Compute(graph<vertex>& GA, commandLine P) {
   parallel_for(long i=0;i<n;i++) Parents[i] = UINT_E_MAX;
   Parents[start] = start;
   vertexSubset Frontier(n,start); //creates initial frontier
+  double start_t, stop_t;
   while(!Frontier.isEmpty()){ //loop until frontier is empty
+#ifdef OPENMP_DEBUG
+      start_t = omp_get_wtime();
+#endif
       reached_num += Frontier.numNonzeros();
+//      printf("%ld\n", Frontier.numNonzeros());
     vertexSubset output = edgeMap(GA, Frontier, BFS_F(Parents));    
     Frontier.del();
     Frontier = output; //set new frontier
+#ifdef OPENMP_DEBUG
+      stop_t = omp_get_wtime();
+      printf("%ld, time concumption %lf s\n", Frontier.numNonzeros(), stop_t-start_t);
+#endif
+
   } 
   Frontier.del();
   free(Parents);
